@@ -51,7 +51,7 @@ object mainApp {
     // Initial variables
     val transactions = ds_full.rdd.map(row => (row(1), row(0))).groupByKey().map(t => t._2.map(_.toString.toInt)).repartition(5)
     val totalTransactions = transactions.count().toInt
-    val min_support = 0.27
+    val min_support = 0.19
     val total_support = min_support * totalTransactions
     val frequent_singleton = transactions.flatMap(transaction => transaction.map(movieId => (movieId, 1))).reduceByKey((x, y) => x + y).filter(x => x._2 >= total_support).map(_._1).collect()
     var l1 = ListBuffer[List[Int]]()
@@ -69,9 +69,9 @@ object mainApp {
       val candidatesPartitions = transactions.mapPartitions(x => filter_candidates(x, candidates, k))
       val new_frequent_itemsets = candidatesPartitions.reduceByKey((x,y) => x + y).filter(z => z._2 >= total_support)
       last_frequent_itemsets = sort(new_frequent_itemsets.map(x => x._1.sorted).collect().toList).toList.map(_.toList)
+      frequent_itemsets ++= last_frequent_itemsets
       k = k + 1
-      // printing
-      last_frequent_itemsets.foreach(println)
     }
+    frequent_itemsets.foreach(println)
   }
 }
